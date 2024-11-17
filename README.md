@@ -183,3 +183,82 @@ Vamos fazer 3 coisas no HTML do componente `LoginComponent`:
 </form>
 <!-- Resto do código -->
 ```
+
+## Serviço de autenticação
+Criação do serviço de autentiação:
+```bash
+ng g s core/services/autenticacao
+CREATE src/app/core/services/autenticacao.service.spec.ts (387 bytes)
+CREATE src/app/core/services/autenticacao.service.ts (141 bytes)
+```
+O arquivo gerado de especificação de testes será excluído (`autenticacao.service.spec.ts`).
+
+Implementação do serviço `AutenticacaoService`:
+
+```TypeScript
+// frontend\src\app\core\services\autenticacao.service.ts
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AutenticacaoService {
+  private apiUrl = environment.apiUrl
+
+  constructor(
+    private http: HttpClient,
+  ) { }
+
+  autenticar(email: string, senha: string) : Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/login`, {email, senha})
+  }
+}
+```
+> Note que o método `http.post` recebe dois parâmetros: a URL e o payload. Além disso, note que o retorno desse método é um `Observable`. A definição do método `subscribe` do `Observable` cabe a cada componente que o recebe, não ao serviço.
+
+Modificações no componente `LoginComponent`:
+```TypeScript
+// frontend\src\app\pages\login\login.component.ts
+// Resto do código
+import { Router } from '@angular/router';
+import { AutenticacaoService } from 'src/app/core/services/autenticacao.service';
+
+@Component({
+  // Resto do código
+})
+export class LoginComponent implements OnInit{
+  //  Resto do código
+  
+  // Use o construtor apenas para injeção de
+  // dependências e inicializações simples.
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AutenticacaoService,
+    private router: Router,
+  ) {}
+
+  // Resto do código
+
+  login() {
+    const email = this.loginForm.value.email
+    const senha = this.loginForm.value.senha
+
+    // A API tem pré-cadastrados o e-mail vinicios@alura.com,
+    // com a senha 'megadificil'. Vamos testar o serviço assim.
+    this.authService.autenticar(email, senha).subscribe({
+      next: (value) => {
+        console.log('Login realizado com sucesso.', value)
+        // Redirecionamento para a rota raiz.
+        // this.router.navigate(['/'])
+        this.router.navigateByUrl('/')
+      },
+      error: (err) => {
+        console.log('Erro no login', err)
+      }
+    })
+  }
+}
+```

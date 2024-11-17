@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AutenticacaoService } from 'src/app/core/services/autenticacao.service';
 
 @Component({
   selector: 'app-login',
@@ -16,7 +18,9 @@ export class LoginComponent implements OnInit{
   // dependências e inicializações simples.
   constructor(
     // Novidade: o serviço FormBuilder do Angular.
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private authService: AutenticacaoService,
+    private router: Router,
   ) {}
 
   // A implementação da interface OnInit (método ngOnInit)
@@ -38,9 +42,21 @@ export class LoginComponent implements OnInit{
   }
 
   login() {
-    console.log(
-      'Login realizado com sucesso.',
-      this.loginForm.value
-  )
-}
+    const email = this.loginForm.value.email
+    const senha = this.loginForm.value.senha
+
+    // A API tem pré-cadastrados o e-mail vinicios@alura.com,
+    // com a senha 'megadificil'. Vamos testar o serviço assim.
+    this.authService.autenticar(email, senha).subscribe({
+      next: (value) => {
+        console.log('Login realizado com sucesso.', value)
+        // Redirecionamento para a rota raiz.
+        // this.router.navigate(['/'])
+        this.router.navigateByUrl('/')
+      },
+      error: (err) => {
+        console.log('Erro no login', err)
+      }
+    })
+  }
 }
