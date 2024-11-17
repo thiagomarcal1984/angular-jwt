@@ -93,3 +93,93 @@ Definição do HTML do componente:
   </mat-card>
 </section>
 ```
+## Controlando o formulário reativo
+Mudanças no TypeScript do componente `LoginComponent`:
+```TypeScript
+// frontend\src\app\pages\login\login.component.ts
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+
+@Component({
+  // Resto do código
+})
+export class LoginComponent implements OnInit{
+  // Note o operador de asserção de não-nulo,
+  // representado pelo ponto de exclamação
+  // depois do nome da variável.
+  loginForm!: FormGroup
+
+  // Use o construtor apenas para injeção de
+  // dependências e inicializações simples.
+  constructor(
+    // Novidade: o serviço FormBuilder do Angular.
+    private formBuilder: FormBuilder
+  ) {}
+
+  // A implementação da interface OnInit (método ngOnInit)
+  // serve para inicializações mais complexas, como
+  // inscrição em Observables. Este método é executado
+  // APÓS a execução de `constructor`.
+  ngOnInit(): void {
+    // A criação do formulário com o serviço
+    // FormBuilder.group é semelhante a usar
+    // diretamente a classe FormGroup. A diferença é
+    // que com o FormGroup é necessário inicializar
+    // cada FormControl, e com o serviço FormBuilder
+    // o FormControl é criado automaticamente.
+    this.loginForm = this.formBuilder.group({
+      email: [null],
+      // Entre colchetes, definimos o valor padrão.
+      senha: [null],
+    })
+  }
+
+  login() {
+    console.log(
+        'Login realizado com sucesso.', 
+        this.loginForm.value
+    )
+  }
+}
+```
+Vamos fazer 3 coisas no HTML do componente `LoginComponent`:
+1. Amarrar o `FormGroup` criado ao elemento HTML `form`, usando a propriedade `[formGroup]`;
+2. Referenciar o nome do `FormControl` para cada campo do `FormGroup` usando a propriedade `formControlName`; e
+3. Amarrar o método `login()` ao evento `(click)`.
+
+```HTML
+<!-- Resto do código -->
+<form [formGroup]="loginForm">
+    <mat-card-content>
+        <!--
+        Note que o componente MatFormFieldComponent envolve
+        outros dois componentes: o MatLabel e o campo com a
+        propriedade matInput.
+        -->
+        <mat-form-field appearance="outline">
+            <mat-label>E-mail</mat-label>
+            <input matInput type="email"
+                formControlName="email"
+                placeholder="Digite seu e-mail"
+            >
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password"
+                formControlName="senha"
+                placeholder="Digite sua senha"
+            >
+        </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-flat-button
+            color="primary"
+            (click)="login()"
+        >
+        ACESSAR MINHA CONTA
+        </button>
+    </mat-card-actions>
+    <!-- Resto do código -->
+</form>
+<!-- Resto do código -->
+```
