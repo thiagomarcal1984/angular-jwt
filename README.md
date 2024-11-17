@@ -588,3 +588,98 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 })
 export class AppModule { }
 ```
+## Integrando o código
+O componente de estado (`DropdownUfComponent`) está com uma formatação ruim. Vamos ajustar.
+
+```TypeScript
+// frontend\src\app\shared\form-busca\dropdown-uf\dropdown-uf.component.ts
+// Resto do código
+export class DropdownUfComponent implements OnInit {
+  // Resto do código
+  @Input() placeholder: string = '';
+  // Resto do código
+}
+```
+
+Vamos atualizar o HTML do componente `DropdownUfComponent`:
+```HTML
+<!-- frontend\src\app\shared\form-busca\dropdown-uf\dropdown-uf.component.html -->
+<mat-form-field class="input-container" appearance="outline">
+    <mat-label>{{ label }}</mat-label>
+    <mat-icon matPrefix *ngIf="iconePrefixo">
+        {{ iconePrefixo }}
+    </mat-icon>
+    <input
+        matInput
+        [placeholder]="placeholder"
+        [formControl]="control"
+        [name]="label"
+        ngDefaultControl
+        [matAutocomplete]="auto">
+    <!-- Resto do código -->
+</mat-form-field>
+```
+> As mudanças foram na exibição condicional de `iconePrefixo` e no placeholder, que agora contém um property-binding com a variável `placeholder` do TypeScript do componente.
+
+Atualização do SCSS do componente `DropdownUfComponent`:
+```SCSS
+// frontend\src\app\shared\form-busca\dropdown-uf\dropdown-uf.component.scss
+.input-container {
+    margin-bottom: -1.25em;
+}
+.mat-mdc-form-field {
+    width: 100%;
+}
+```
+> Essa modificação é necessária para ajustar a largura de `DropdownUfComponent` no HTML do componente `FormBaseComponent`, mas ela impacta num outro componente: o `FormBuscaComponent`. Vamos modificar o HTML e o SCSS desse componente.
+
+Mudança no HTML do componente `FormBuscaComponent`:
+```HTML
+<!-- frontend\src\app\shared\form-busca\form-busca.component.html -->
+<!-- Resto do código -->
+    <div class="flex-container">
+      <div class="drop-container">
+        <app-dropdown-uf
+          label="Origem"
+          iconePrefixo="flight_takeoff"
+          [control]="formBuscaService.obterControle('origem')"
+          placeholder="Origem"
+        />
+      </div>
+      <!-- Resto do código -->
+      <div class="drop-container">
+        <app-dropdown-uf
+          label="Destino"
+          placeholder="Destino"
+          iconePrefixo="flight_land"
+          [control]="formBuscaService.obterControle('destino')"
+        />
+      </div>
+<!-- Resto do código -->
+```
+> Note a aplicação da propriedade `placeholder` nos componentes `DropdownUfComponent`, assim como o envelopamento deles nas divs de classe `drop-container`. Essa classe ainda será criada no arquivo SCSS do componente `FormBuscaComponent`.
+
+Mudança no SCSS do componente `FormBuscaComponent`:
+```SCSS
+// frontend\src\app\shared\form-busca\form-busca.component.scss
+.form-busca {
+    // Resto do código
+    .drop-container {
+        max-width: 230px;
+    }
+}
+```
+
+Finalmente, vamos mover o componente `DropdownUfComponent` do diretório atual (`frontend\src\app\shared\form-busca`) para a pasta `frontend\src\app\shared\`, pois o componente `DropdownUfComponent` não é mais limitado ao componente `FormBuscaComponent`. O import também precisa ser atualizado no arquivo `app.module.ts`.
+
+```TypeScript
+// frontend\src\app\app.module.ts
+// Resto do código
+
+// Antes
+// import { DropdownUfComponent } from './shared/form-busca/dropdown-uf/dropdown-uf.component';
+
+// Depois
+import { DropdownUfComponent } from './shared/dropdown-uf/dropdown-uf.component';
+// Resto do código
+```
