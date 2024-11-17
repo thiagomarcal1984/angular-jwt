@@ -339,3 +339,252 @@ Pontos de destaque no código HTML:
 2. A propriedade `errors` de cada `FormControl` pode ou não ter erros de validação, assim como o próprio `FormControl` pode não ter erros. Por isso, é necessário usar o **operador de encadeamento opcional / operador de acesso seguro / operador de propagação nula / ponto de interrogação (?)**;
 3. Os validadores referenciados pela propriedade `errors` são identificados por strings, cujos conteúdos correspondem aos nomes dos validadores que estão no TypeScript do componente. Neste exemplo, usamos os validadores `Validators.email` e `Validators.required` (respectivamente as strings seriam `email` e `required`);
 4. O botão pode ter seu status de habilitado/desabilitado modificado em função do status do formulário. No exemplo, usamos o data-bind `[disabled]` e fornecemos para ele a propriedade booleana `invalid` do formulário `loginForm`.
+
+# Cadastro
+## Formulário base
+Criando o componente com o Angular CLI:
+```bash
+ng g c shared/form-base
+CREATE src/app/shared/form-base/form-base.component.html (24 bytes)
+CREATE src/app/shared/form-base/form-base.component.spec.ts (574 bytes)
+CREATE src/app/shared/form-base/form-base.component.ts (214 bytes)
+CREATE src/app/shared/form-base/form-base.component.scss (0 bytes)
+UPDATE src/app/app.module.ts (3482 bytes)
+```
+
+## Desafio: criação do formulário base
+Vamos criar uma rota para testar o componente:
+```TypeScript
+// frontend\src\app\app-routing.module.ts
+// Resto do código
+import { FormBaseComponent } from './shared/form-base/form-base.component';
+
+const routes: Routes = [
+  // Resto do código
+  {
+    path: 'cadastro',
+    component: FormBaseComponent
+  },
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+```
+
+Em seguida, vamos alterar o TypeScript de `FormBaseComponent`:
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { UnidadeFederativa } from 'src/app/core/types/type';
+
+@Component({
+  // Resto do código
+})
+export class FormBaseComponent implements OnInit{
+  cadastroForm!: FormGroup
+  estadoControl = new FormControl<UnidadeFederativa | null>(null, Validators.required)
+
+  constructor (
+    private formBuilder: FormBuilder,
+  ) {}
+
+  ngOnInit() {
+    this.cadastroForm = this.formBuilder.group({
+      nome: [null, [Validators.required]],
+      nascimento: [null, [Validators.required]],
+      cpf: [null, [Validators.required]],
+      cidade: [null, [Validators.required]],
+      genero: ['outro'],
+      telefone: [null, [Validators.required]],
+      estado: this.estadoControl,
+      email: [null, [Validators.required, Validators.email]],
+      confirmarEmail: [null, [Validators.required, Validators.email]],
+      senha: [null, [Validators.required, Validators.minLength(3)]],
+      confirmarSenha: [null, [Validators.required, Validators.minLength(3)]],
+      aceitarTermos: [null, [Validators.requiredTrue]],
+    })
+  }
+}
+```
+> Note a declaração de `estadoControl`: é um `FormControl` cujo tipo é da interface `UnidadeFederativa`. Os seus parâmetros são o valor default (no exemplo é `null` e a lista de validadores). Note também que dentro do método `ngOnInit` o controle se chamada `estado`, e esse controle recebeo próprio `estadoControl`. Mal explicado o porquê dessa gambiarra.
+
+O HTML gigante do componente `FormBaseComponent`:
+```HTML
+<!-- frontend\src\app\shared\form-base\form-base.component.html -->
+<app-container>
+  <mat-card>
+    <form [formGroup]="cadastroForm">
+      <mat-card-title>
+        Crie sua conta
+      </mat-card-title>
+      <section>
+        <div class="acoesPerfil">
+          <h2>Dados pessoais</h2>
+          <button mat-stroked-button color="primary">
+            <mat-icon>logout</mat-icon>
+            DESLOGAR
+          </button>
+        </div>
+      </section>
+      <mat-card-content>
+        <div class="grid-container">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nome</mat-label>
+            <input matInput type="text" formControlName="nome" placeholder="Nome">
+            <mat-error *ngIf="cadastroForm.get('nome')?.errors?.['required']">
+              Nome é obrigatório
+            </mat-error>
+          </mat-form-field>
+          <div class="grid-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Data de nascimento</mat-label>
+              <input matInput
+                formControlName="nascimento"
+                [matDatepicker]="nascimento"
+                placeholder="Data de Nascimento"
+              >
+              <mat-datepicker-toggle matSuffix [for]="nascimento"></mat-datepicker-toggle>
+              <mat-datepicker #nascimento></mat-datepicker>
+              <mat-error *ngIf="cadastroForm.get('nascimento')?.errors?.['required']">
+                Data de nascimento é obrigatória
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>CPF</mat-label>
+              <input matInput formControlName="cpf" placeholder="Digite seu CPF">
+              <mat-error *ngIf="cadastroForm.get('cpf')?.errors?.['required']">
+                CPF é obrigatório
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Cidade</mat-label>
+              <input matInput formControlName="cidade" placeholder="Digite sua cidade">
+              <mat-error *ngIf="cadastroForm.get('cidade')?.errors?.['required']">
+                Cidade é obrigatória
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="grid-item">
+            <div class="radio-group">
+              <mat-label>Gênero</mat-label>
+              <!-- Não é necessário aninhar o MatRadioGroup num MatFormField -->
+              <mat-radio-group formControlName="genero" color="primary">
+                <mat-radio-button value="feminino">Feminino</mat-radio-button>
+                <mat-radio-button value="masculino">Masculino</mat-radio-button>
+                <mat-radio-button value="outro">Prefiro não informar</mat-radio-button>
+              </mat-radio-group>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Telefone</mat-label>
+              <input matInput formControlName="telefone" placeholder="+xx xxxx-xxxx">
+              <mat-error *ngIf="cadastroForm.get('telefone')?.errors?.['required']">
+                Telefone é obrigatório
+              </mat-error>
+            </mat-form-field>
+            <app-dropdown-uf
+              label="Estado"
+              placeholder="Estado"
+              [control]="estadoControl"
+            >
+          </app-dropdown-uf>
+          <mat-error *ngIf="cadastroForm.get('estado')?.errors?.['required'] && estadoControl?.touched">
+            Estado é obrigatório
+          </mat-error>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-divider></mat-divider>
+      <div class="acessoPerfil">
+        <h2>Dados de acesso</h2>
+      </div>
+      <mat-card-content>
+        <div class="grid-container">
+          <div class="grid-item">
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input matInput formControlName="email" placeholder="Digite seu e-mail">
+              <mat-error *ngIf="cadastroForm.get('email')?.errors?.['required']">
+                E-mail é obrigatório
+              </mat-error>
+              <mat-error *ngIf="cadastroForm.get('email')?.errors?.['email']">
+                E-mail inválido
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Senha</mat-label>
+              <input matInput formControlName="senha" type="password" placeholder="Digite sua senha">
+              <mat-error *ngIf="cadastroForm.get('senha')?.errors?.['required']">
+                Senha é obrigatória
+              </mat-error>
+              <mat-error *ngIf="cadastroForm.get('senha')?.errors?.['minlength']">
+                Senha deve ter pelo menos 3 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="grid-item">
+            <mat-form-field appearance="outline">
+              <mat-label>Confirmar E-mail</mat-label>
+              <input matInput formControlName="confirmarEmail" placeholder="Digite seu e-mail">
+              <mat-error *ngIf="cadastroForm.get('confirmarEmail')?.errors?.['required']">
+                Confirmação de E-mail é obrigatório
+              </mat-error>
+              <mat-error *ngIf="cadastroForm.get('confirmarEmail')?.errors?.['email']">
+                E-mail inválido
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Confirmar Senha</mat-label>
+              <input matInput formControlName="confirmarSenha" type="password" placeholder="Digite sua senha">
+              <mat-error *ngIf="cadastroForm.get('confirmarSenha')?.errors?.['required']">
+                Confirmação de Senha é obrigatória
+              </mat-error>
+              <mat-error *ngIf="cadastroForm.get('confirmarSenha')?.errors?.['minlength']">
+                Senha deve ter pelo menos 3 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+        <mat-checkbox formControlName="aceitarTermos" color="primary" class="full-width">
+          Li e aceito os termos e condições deste cadastro *
+        </mat-checkbox>
+        <mat-error *ngIf="cadastroForm.get('aceitarTermos')?.errors?.['required'] && cadastroForm.get('aceitarTermos')?.touched">
+          Você precisa aceitar os termos e condições para efetuar o cadastro
+        </mat-error>
+      </mat-card-content>
+      <mat-card-actions align="start">
+          <button  mat-flat-button
+            [disabled]="cadastroForm.invalid"
+            color="primary"
+          >
+            CADASTRAR
+          </button>
+      </mat-card-actions>
+    </form>
+  </mat-card>
+</app-container>
+```
+O arquivo `app.module.ts` precisou importar uns módulos referenciados nesse HTML gigante para que os componentes fossem usáveis:
+```TypeScript
+// frontend\src\app\app.module.ts
+// Resto do código
+import { FormBaseComponent } from './shared/form-base/form-base.component';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
+@NgModule({
+  // Resto do código
+  imports: [
+    // Resto do código
+    MatRadioModule,
+    MatDividerModule,
+    MatCheckboxModule,
+  ],
+  // Resto do código
+})
+export class AppModule { }
+```
