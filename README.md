@@ -262,3 +262,80 @@ export class LoginComponent implements OnInit{
   }
 }
 ```
+## Validando o login
+Vamos incluir o link para a rota `/login` usando a propriedade `routerLink` no HTML do componente `HeaderComponent`:
+```HTML
+<!-- frontend\src\app\shared\header\header.component.html -->
+<!-- Resto do código -->
+    <button routerLink="/login" mat-stroked-button>LOGIN</button>
+<!-- Resto do código -->
+```
+
+Em seguida, vamos colocar validações nos campos de e-mail e senha no TypeScript do componente `LoginComponent`:
+
+```TypeScript
+// frontend\src\app\pages\login\login.component.ts
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+// Resto do código
+export class LoginComponent implements OnInit{
+    // Resto do código
+    ngOnInit(): void {
+        this.loginForm = this.formBuilder.group({
+        email: [null, [Validators.required, Validators.email]],
+        senha: [null, Validators.required],
+        })
+    }
+
+}
+```
+> Perceba que dentro da classe `Validators` há vários validadores. Aqui estamos usando apenas o `email` e `required`.
+
+Vamos controlar a exibição das mensagens de erro no HTML do componente `LoginComponent` caso eles existam:
+```HTML
+<!-- frontend\src\app\pages\login\login.component.html -->
+<!-- Resto do código -->
+<form [formGroup]="loginForm">
+    <mat-card-content>
+        <mat-form-field appearance="outline">
+            <mat-label>E-mail</mat-label>
+            <input matInput type="email"
+                formControlName="email"
+                placeholder="Digite seu e-mail"
+            >
+            <mat-error *ngIf="loginForm.get('email')?.errors?.['required']">
+                E-mail obrigatório.
+            </mat-error>
+            <mat-error *ngIf="loginForm.get('email')?.errors?.['email']">
+                Formato de e-mail inválido.
+            </mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+            <mat-label>Senha</mat-label>
+            <input matInput type="password"
+                formControlName="senha"
+                placeholder="Digite sua senha"
+            >
+            <mat-error *ngIf="loginForm.get('senha')?.errors?.['required']">
+                Senha é obrigatória
+            </mat-error>
+        </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-flat-button
+        color="primary"
+        (click)="login()"
+        [disabled]="loginForm.invalid"
+        >
+        ACESSAR MINHA CONTA
+        </button>
+    </mat-card-actions>
+    <!-- Resto do código -->
+</form>
+<!-- Resto do código -->
+```
+
+Pontos de destaque no código HTML:
+1. Para cada componente `MatErrorComponent` usamos a diretiva `*ngIf` para evitar que a mensagem de erro apareça quando os campos forem válidos;
+2. A propriedade `errors` de cada `FormControl` pode ou não ter erros de validação, assim como o próprio `FormControl` pode não ter erros. Por isso, é necessário usar o **operador de encadeamento opcional / operador de acesso seguro / operador de propagação nula / ponto de interrogação (?)**;
+3. Os validadores referenciados pela propriedade `errors` são identificados por strings, cujos conteúdos correspondem aos nomes dos validadores que estão no TypeScript do componente. Neste exemplo, usamos os validadores `Validators.email` e `Validators.required` (respectivamente as strings seriam `email` e `required`);
+4. O botão pode ter seu status de habilitado/desabilitado modificado em função do status do formulário. No exemplo, usamos o data-bind `[disabled]` e fornecemos para ele a propriedade booleana `invalid` do formulário `loginForm`.

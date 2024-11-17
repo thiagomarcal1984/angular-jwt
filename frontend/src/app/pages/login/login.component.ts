@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AutenticacaoService } from 'src/app/core/services/autenticacao.service';
 
@@ -35,9 +35,9 @@ export class LoginComponent implements OnInit{
     // cada FormControl, e com o serviço FormBuilder
     // o FormControl é criado automaticamente.
     this.loginForm = this.formBuilder.group({
-      email: [null],
+      email: [null, [Validators.required, Validators.email]],
       // Entre colchetes, definimos o valor padrão.
-      senha: [null],
+      senha: [null, Validators.required],
     })
   }
 
