@@ -683,3 +683,117 @@ Finalmente, vamos mover o componente `DropdownUfComponent` do diretório atual (
 import { DropdownUfComponent } from './shared/dropdown-uf/dropdown-uf.component';
 // Resto do código
 ```
+
+## Componente cadastro
+Criando o componente/página de cadastro: 
+
+```bash
+PS D:\alura\angular-jwt\frontend> ng g c pages/cadastro      
+CREATE src/app/pages/cadastro/cadastro.component.html (23 bytes)
+CREATE src/app/pages/cadastro/cadastro.component.spec.ts (573 bytes)
+CREATE src/app/pages/cadastro/cadastro.component.ts (211 bytes)
+CREATE src/app/pages/cadastro/cadastro.component.scss (0 bytes)
+UPDATE src/app/app.module.ts (3825 bytes)
+```
+
+O componente `CadastroComponent` será o pai do componente `FormBaseComponent`. A ideia é que `CadastroComponent` reaja a eventos do componente `FormBaseComponent`. Para isso:
+1. O filho `FormBaseComponent`, no TypeScript, deve fornecer externamente o emissor de eventos da classe `EventEmitter` por meio de um parâmetro de saída `@Output()`. No exemplo, o evento será chamado `acaoClique()`. Também é necessário implementar um outro método para emitir o evento (neste caso, o método será `executarAcao()`);
+2. O filho `FormBaseComponent` precisa disparar esse evento (neste exemplo, será um click) referenciando-o em seu HTML. Isso é feito com `<button ... (click)="executarAcao()">`;
+3. O pai `CadastroComponent` implementa um método qualquer (neste exemplo, o método será `cadastrar()`) que reagirá ao evento emitido pelo filho `FormBaseComponent`.
+4. O HTML do pai `CadastroComponent` declara o event binding para o evento do mesmo tipo definido pelo filho `FormBaseComponent` (no exemplo, o evento será `acaoClique()`) e atribui ao evento o método implementado para resposta (`cadastrar()`).
+
+Começando pelo filho:
+
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+
+// Resto do código
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+// Resto do código
+export class FormBaseComponent implements OnInit{
+  // Resto do código
+  // O pai vai setar a variável perfilComponent para exibir ou não certos elementos.
+  @Input() perfilComponent!: boolean 
+  @Output() acaoClique: EventEmitter<any> = new EventEmitter<any>()
+  // Resto do código
+  executarAcao() {
+    this.acaoClique.emit()
+  }
+}
+```
+
+```HTML
+<!-- frontend\src\app\shared\form-base\form-base.component.html -->
+ 
+<!-- Resto do código -->
+  <div class="acoesPerfil" *ngIf="perfilComponent">
+    <!-- Resto do código -->
+  </div>
+  <!-- Resto do código -->
+  <mat-divider *ngIf="perfilComponent"></mat-divider>
+  <!-- Resto do código -->
+
+  <mat-card-actions align="start">
+      <button  mat-flat-button
+        [disabled]="cadastroForm.invalid"
+        color="primary"
+        (click)="executarAcao()"
+      >
+        CADASTRAR
+      </button>
+  </mat-card-actions>
+<!-- Resto do código -->
+```
+> Perceba que o método `executarAcao()` é o responsável por emitir/propagar o evento para o componente pai.
+
+Mudanças no componente pai:
+```TypeScript
+// frontend\src\app\pages\cadastro\cadastro.component.ts
+
+// Resto do código
+export class CadastroComponent {
+  // perfilComponent é responsável por ocultar elementos do HTML do filho.
+  perfilComponent = false 
+
+  // cadastrar() é o método que vai responde ao evento personalizado `acaoClique()`
+  cadastrar() {
+    console.log('Cadastro realizado com sucesso.')
+  }
+}
+```
+
+```HTML
+<!-- frontend\src\app\pages\cadastro\cadastro.component.html -->
+
+<!-- Resto do código -->
+<app-form-base [perfilComponent]="perfilComponent" (acaoClique)="cadastrar()" />
+```
+> Note que o componente pai `CadastroComponent` 
+> 1. _envia_ para o parâmetro `@Input() perfilComponent` do filho `FormBaseComponent` o seu booleano `perfilComponent` para ocultar/exibir certos elementos. 
+> 2. _recebe_ do filho `FormBaseComponent` o parâmetro `@Output() acaoClique` por meio do event binding `(acaoClique)` e dispara o seu próprio tratamento do evento (no caso, o método `cadastrar()`).
+
+Agora a rota `cadastro` deve aponstar para `CadastroComponent` ao invés de `FormBaseComponent`: 
+```TypeScript
+// frontend\src\app\app-routing.module.ts
+
+// Resto do código
+import { CadastroComponent } from './pages/cadastro/cadastro.component';
+
+const routes: Routes = [
+  // Resto do código
+  {
+    path: 'cadastro',
+    component: CadastroComponent
+  },
+  // Resto do código
+];
+```
+
+E finalmente, o `HeaderComponent` precisa atualiar o link para a nova rota: 
+```HTML
+<!-- frontend\src\app\shared\header\header.component.html -->
+
+<!-- Resto do código -->
+  <button routerLink="/cadastro" mat-raised-button color="primary">CADASTRE-SE</button>
+<!-- Resto do código -->
+```
