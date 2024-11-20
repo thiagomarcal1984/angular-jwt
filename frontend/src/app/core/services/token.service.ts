@@ -16,7 +16,8 @@ export class TokenService {
   }
 
   retornarToken() {
-    return localStorage.getItem(KEY)
+    return localStorage.getItem(KEY) ?? ""
+    // Retorna o token ou uma string vazia se o token não existir.
   }
 
   possuiToken() {

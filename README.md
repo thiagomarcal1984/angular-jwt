@@ -1186,3 +1186,79 @@ export class TokenService {
 }
 ```
 > Note que todos os métodos implementados usam o `localStorage` do navegador.
+
+## UserService com BehaviorSubject
+Vamos criar um outro serviço para controlar usuários logados:
+
+```bash
+ng g s core/services/user --skip-tests
+# Output
+CREATE src/app/core/services/user.service.ts (133 bytes)
+```
+
+Implementação de `UserService` recém-criado:
+```TypeScript
+// frontend\src\app\core\services\user.service.ts
+import { BehaviorSubject } from 'rxjs';
+import { TokenService } from './token.service';
+import { Injectable } from '@angular/core';
+import { PessoaUsuaria } from '../types/type';
+import { jwtDecode } from 'jwt-decode';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UserService {
+  private userSubject = new BehaviorSubject<PessoaUsuaria | null>(null)
+
+  constructor(
+    private tokenService : TokenService,
+  ) {
+    if (this.tokenService.possuiToken()) {
+      this.decodificarJWT()
+    }
+  }
+
+  decodificarJWT() {
+    const token = this.tokenService.retornarToken()
+    const user = jwtDecode(token) as PessoaUsuaria
+    this.userSubject.next(user) // Emite o usuário decodificado do token.
+  }
+
+  retornarUser() {
+    // Retornar o userSubject como um Observable.
+    return this.userSubject.asObservable()
+  }
+
+  salvarToken(token: string) {
+    this.tokenService.salvarToken(token)
+    this.decodificarJWT()
+  }
+
+  logout() {
+    this.tokenService.excluirToken()
+    this.userSubject.next(null) // Emite usuário nulo.
+  }
+
+  estaLogado() {
+    this.tokenService.possuiToken()
+  }
+}
+```
+> Dois métodos interessantes dos objetos de classe `BehaviorSubject`:
+> 1. `next(valor)` comunica aos assinantes do objeto o seu novo valor;
+> 2. `asObservable()` retorna um `Observable` do `BehaviorSubject`.
+
+Pequena mudança no `TokenService`:
+```TypeScript
+// frontend\src\app\core\services\token.service.ts
+// Resto do código 
+export class TokenService {
+  // Resto do código 
+  retornarToken() {
+    return localStorage.getItem(KEY) ?? ""
+    // Retorna o token ou uma string vazia se o token não existir.
+  }
+  // Resto do código 
+}
+```
