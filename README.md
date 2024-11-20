@@ -797,3 +797,100 @@ E finalmente, o `HeaderComponent` precisa atualiar o link para a nova rota:
   <button routerLink="/cadastro" mat-raised-button color="primary">CADASTRE-SE</button>
 <!-- Resto do código -->
 ```
+
+## Service e interface
+```bash
+ng g s core/services/formulario --skip-tests
+# Output
+CREATE src/app/core/services/formulario.service.ts (139 bytes)
+```
+> Note a flag `--skip=tests`: ela impede a criação dos arquivos `spec.ts`, que contérão os testes unitários.
+
+O serviço vai conter apenas um `FormGroup` encapsulado, além do getter e do setter dele:
+```TypeScript
+// frontend\src\app\core\services\formulario.service.ts
+
+import { Injectable } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FormularioService {
+
+  cadastroForm: FormGroup | null = null
+
+  getCadastro(): FormGroup | null {
+    return this.cadastroForm
+  }
+  setCadastro(form: FormGroup) {
+    this.cadastroForm = form
+  }
+}
+```
+
+O serviço será injetado no componente "abstrato" `FormBaseComponent`, e FormGroup `cadastroForm` será atribuído à propriedade `cadastroForm` no `FormularioService`:
+
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+
+import { FormularioService } from 'src/app/core/services/formulario.service';
+// Resto do código
+export class FormBaseComponent implements OnInit{
+  cadastroForm!: FormGroup
+  // Resto do código
+  constructor (
+    private formBuilder: FormBuilder,
+    private formularioService: FormularioService,
+  ) {}
+
+  ngOnInit() {
+    this.cadastroForm = this.formBuilder.group({
+      // Resto do código
+    })
+    // Resto do código
+    this.formularioService.setCadastro(this.cadastroForm)
+  }
+  // Resto do código
+}
+```
+
+O serviço também será injetado no componente `CadastroComponent`. Ele apenas vai usar o formulário `cadastroForm` de `FormularioService`, que foi inicializado pelo componente `FormBaseComponent`:
+```TypeScript
+// frontend\src\app\pages\cadastro\cadastro.component.ts
+
+import { FormularioService } from './../../core/services/formulario.service';
+import { Component } from '@angular/core';
+
+@Component({
+  // Resto do código
+})
+export class CadastroComponent {
+  perfilComponent = false
+  constructor(private formularioService: FormularioService) {}
+
+  cadastrar() {
+    const formCadastro = this.formularioService.getCadastro()
+    // Impressão do formCadastro para teste.
+    console.log('Cadastro realizado com sucesso.', formCadastro) 
+  }
+}
+```
+
+Finalmente, vamos acrescentar (para uso futuro) mais uma interface ao arquivo `type.ts` para a rota `/auth/cadastro` da API:
+```TypeScript
+// frontend\src\app\core\types\type.ts
+
+// Resto do código
+export interface PessoaUsuaria {
+  nome: string,
+  nascimento: string,
+  cpf: string,
+  telefone: string,
+  email: string,
+  senha: string,
+  genero: string,
+  cidade: string,
+  estado: UnidadeFederativa,
+}
+```
