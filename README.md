@@ -1262,3 +1262,48 @@ export class TokenService {
   // Resto do código 
 }
 ```
+
+## Autenticação
+Mudanças em `AutenticacaoService`:
+
+```TypeScript
+// frontend\src\app\core\services\autenticacao.service.ts
+
+import { UserService } from './user.service';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+// Resto do código
+
+interface AuthResponse {
+  access_token : string,
+}
+
+// Resto do código
+export class AutenticacaoService {
+  private apiUrl = environment.apiUrl
+
+  constructor(
+    private http: HttpClient,
+    private userService: UserService,
+  ) { }
+
+  autenticar(email: string, senha: string) :
+    Observable<HttpResponse<AuthResponse>> {
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/auth/login`,
+      { email, senha },
+      { observe: 'response' }
+    ).pipe(
+      tap(response => {
+        const authToken = response.body?.access_token || ''
+        this.userService.salvarToken(authToken)
+      })
+    )
+  }
+}
+```
+Pontos de interesse:
+1. O método `http.post` passou a ser tipado com a nova interface `AuthResponse` definida no próprio `AutenticacaoService`;
+2. O método `http.post` também recebeu um terceiro parâmetro (`{ observe: 'response' }`);
+3. O `UserService` foi injetado em `AutenticacaoService` para fazer os controles de usuário;
+4. A função `tap` do rxjs, encadeado pela função `pipe`, vai pegar a resposta (que é do tipo `AuthResponse`) e executar efeitos colaterais (no caso, salvar o token usando o `UserService`).
