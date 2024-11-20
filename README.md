@@ -928,3 +928,59 @@ export class CadastroService {
   }
 }
 ```
+
+## Erro 500 ao cadastrar
+Vamos mudar o `CadastroComponent` para que ele use o `CadastroService`:
+
+```TypeScript
+// frontend\src\app\pages\cadastro\cadastro.component.ts
+
+import { PessoaUsuaria } from 'src/app/core/types/type';
+import { CadastroService } from './../../core/services/cadastro.service';
+// Resto do código
+
+export class CadastroComponent {
+  perfilComponent = false
+  constructor(
+    private formularioService: FormularioService,
+    private cadastroService: CadastroService,
+  ) {}
+
+  cadastrar() {
+    const formCadastro = this.formularioService.getCadastro()
+    if (formCadastro?.valid) {
+      const novoCadastro = formCadastro.getRawValue() as PessoaUsuaria
+      this.cadastroService.cadastrar(novoCadastro).subscribe({
+        next: (value) => {
+          console.log('Cadastro realizado com sucesso.', value)
+        },
+        error: (err) => {
+          console.error('Erro ao realizar cadastro: ', err)
+        }
+      })
+    }
+  }
+}
+```
+> A novidade é o uso do método `getRawValue()` do formulário de cadastro da classe `FormGroup` localizado em `CadastroService`. Na mesma linha, há um cast do retorno desse métod para a interface `PessoaUsuaria`.
+
+Mas... ao sumetermos o formulário, o seguinte erro aparece no console:
+```TypeScript
+{
+    "headers": {
+        "normalizedNames": {},
+        "lazyUpdate": null
+    },
+    "status": 500,
+    "statusText": "Internal Server Error",
+    "url": "http://localhost:8080/auth/cadastro",
+    "ok": false,
+    "name": "HttpErrorResponse",
+    "message": "Http failure response for http://localhost:8080/auth/cadastro: 500 Internal Server Error",
+    "error": {
+        "statusCode": 500,
+        "message": "Internal server error"
+    }
+}
+```
+Na próxima aula será visto como resolver isso.
