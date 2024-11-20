@@ -1136,3 +1136,53 @@ Com a validação implementada, vamos exibir as mensagens de erro no HTML de `Fo
   </mat-form-field>
 <!-- Resto do código -->
 ```
+
+# Autenticação
+## JWT e TokenService
+Visite: https://jwt.io para saber sobre o JSON Web Token (JWT).
+
+Para usar o JWT neste projeto, precisaremos instalar a dependência `jwt-decode`:
+```bash
+npm i jwt-decode
+```
+> Note que o arquivo `package.json` foi atualizado com a dependência `jwt-decode`.
+
+Vamos criar o serviço que vai manipular o JSON Web Token: 
+```bash
+PS D:\alura\angular-jwt\frontend> ng g s core/services/token --skip-tests
+# Output
+CREATE src/app/core/services/token.service.ts (134 bytes)
+```
+
+Implementação do serviço `TokenService`:
+```TypeScript
+// frontend\src\app\core\services\token.service.ts
+
+import { Injectable } from '@angular/core';
+
+const KEY = 'token'
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TokenService {
+
+  salvarToken(token: string) {
+    return localStorage.setItem(KEY, token)
+  }
+
+  excluirToken() {
+    localStorage.removeItem(KEY)
+  }
+
+  retornarToken() {
+    return localStorage.getItem(KEY)
+  }
+
+  possuiToken() {
+    // Duas exclamações seguidas converte o valor em booleano.
+    return !!this.retornarToken()
+  }
+}
+```
+> Note que todos os métodos implementados usam o `localStorage` do navegador.
