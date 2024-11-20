@@ -984,3 +984,64 @@ Mas... ao sumetermos o formulário, o seguinte erro aparece no console:
 }
 ```
 Na próxima aula será visto como resolver isso.
+
+## Ajustando o componente dropdown
+O valor do dropdown de Unidades Federativas é uma string com o nome do estado. Mas a API espera um objeto complexo como uma Unidade Federativa: 
+```JSON
+{
+  // Resto do código JSON do payload esperado pela API
+  "estado": {
+    "id": 0,
+    "nome": "string",
+    "sigla": "string"
+  }
+}
+```
+
+Segue a correção do código de `DropdownUfComponent`:
+```TypeScript
+// frontend\src\app\shared\dropdown-uf\dropdown-uf.component.ts
+// Resto do código
+export class DropdownUfComponent implements OnInit {
+  // Resto do código
+  filtrarUfs(value: string | UnidadeFederativa): UnidadeFederativa[] {
+    const nomeUf = typeof value === 'string' ? value.toLowerCase() : value?.nome;
+    const valorFiltrado = nomeUf?.toLowerCase();
+    const result = this.unidadesFederativas.filter(
+      estado => estado.nome.toLowerCase().includes(valorFiltrado)
+    )
+    return result
+  }
+  // Resto do código
+}
+```
+> Antes o método `filtrarUfs` só aceitava strings; agora ela aceita tanto strings quanto a interface `UnidadeFederativa`. Para fazer o filtro, é necessário primeiro saber qual o tipo do parâmetro fornecido; depois pegar o nome do estado (seja da string, seja do atributo nome da interface `UnidadeFederativa`).
+
+A documentação do Angular sobre o `MatAutocompleteComponent` diz que é possível mudar o texto de exibição do objeto selecionado. Para isso, definimos uma função que retorna a string e usamos um data-binding com a propriedade `displayWith`:
+
+```HTML
+<!-- frontend\src\app\shared\dropdown-uf\dropdown-uf.component.html -->
+
+<!-- Resto do código -->
+  <mat-autocomplete [displayWith]="displayFn" autoActiveFirstOption #auto="matAutocomplete">
+    <mat-option *ngFor="let estado of filteredOptions$ | async" [value]="estado">
+      {{estado.nome}}
+    </mat-option>
+  </mat-autocomplete>
+<!-- Resto do código -->
+```
+
+Agora vamos fazer a implementação da função que batizamos de `displayFn` em `DropdownUfComponent`:
+```TypeScript
+// frontend\src\app\shared\dropdown-uf\dropdown-uf.component.ts
+// Resto do código
+export class DropdownUfComponent implements OnInit {
+  // Resto do código
+  displayFn(estado: UnidadeFederativa): string {
+    return estado && estado.nome ? `Selecionado ${estado.nome} (${estado.sigla})` : '';
+  }
+}
+```
+> Note que a implementação de `displayFn` muda a maneira como **o valor selecionado** é exibido no `MatAutocompleteComponent`. Isso não tem nada a ver com o texto exibido na lista de sugestões do `MatAutocompleteComponent`, cujos valores estão em cada uma das opções (componente `<mat-option>`)
+> 
+> Por exemplo: a lista vai exibir o nome do estado (ex.: *"Acre"*), mas depois de selecionado, o autocomplete vai exibir o texto *"Selecionado Acre (AC)"*.
