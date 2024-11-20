@@ -1045,3 +1045,94 @@ export class DropdownUfComponent implements OnInit {
 > Note que a implementação de `displayFn` muda a maneira como **o valor selecionado** é exibido no `MatAutocompleteComponent`. Isso não tem nada a ver com o texto exibido na lista de sugestões do `MatAutocompleteComponent`, cujos valores estão em cada uma das opções (componente `<mat-option>`)
 > 
 > Por exemplo: a lista vai exibir o nome do estado (ex.: *"Acre"*), mas depois de selecionado, o autocomplete vai exibir o texto *"Selecionado Acre (AC)"*.
+
+## Validações personalizadas
+A classe `Validators` do módulo `@angular/forms` fornecem apenas validações básicas. Para validações mais complexas, precisamos criar um TypeScript separado.
+
+Vamos criar um novo arquivo que vai conter uma validação de igualdade entre dois campos:
+
+```TypeScript
+// frontend\src\app\shared\form-validations.ts
+
+import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
+
+export class FormValidations {
+  static equalTo(otherField: string) : ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const fieldValue = control.value
+      const otherFieldValue = control.root.get(otherField)?.value
+      if (fieldValue !== otherFieldValue) {
+        return {equalTo: true}
+      }
+      return null
+    }
+  }
+}
+```
+> 1. `AbstractControl` é a superclasse dos controles do `FormGroup`.
+> 2. `ValidationErrors` é um tipo estruturado de erro semelhante a um dicionário do Python. Esse tipo será retornado caso a validação falhe.
+> 3. `ValidationFn` é uma interface com uma estrutura key-value pair `(control: AbstractControl): ValidationErrors | null;`.
+> Ou seja: o método estático `equalTo` retorna uma outra função de validação cujo retorno é um tipo `ValidationErrors` ou `null`.
+
+Vamos inserir a validação recém-criada no componente `FormBaseComponent`:
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+
+import { FormValidations } from '../form-validations';
+// Resto do código
+
+export class FormBaseComponent implements OnInit{
+  // Resto do código
+  ngOnInit() {
+    this.cadastroForm = this.formBuilder.group({
+      // Resto do código
+      email: [null, [Validators.required, Validators.email]],
+      confirmarEmail: [
+        null,
+        [
+          Validators.required,
+          Validators.email,
+          FormValidations.equalTo('email') // Nova validação.
+        ]
+      ],
+      senha: [null, [Validators.required, Validators.minLength(3)]],
+      confirmarSenha: [
+        null,
+        [
+          Validators.required,
+          Validators.minLength(3),
+          FormValidations.equalTo('senha') // Nova validação.
+        ]
+      ],
+      aceitarTermos: [null, [Validators.requiredTrue]],
+    })
+
+    this.formularioService.setCadastro(this.cadastroForm)
+  }
+}
+```
+
+Com a validação implementada, vamos exibir as mensagens de erro no HTML de `FormBaseComponent`:
+```HTML
+<!-- frontend\src\app\shared\form-base\form-base.component.html -->
+
+<!-- Resto do código -->
+  <mat-form-field appearance="outline">
+    <mat-label>Confirmar E-mail</mat-label>
+    <input matInput formControlName="confirmarEmail" placeholder="Digite seu e-mail">
+    <!-- Resto das mensagens de erro -->
+    <mat-error *ngIf="cadastroForm.get('confirmarEmail')?.errors?.['equalTo']">
+      E-mails não coincidem
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Confirmar Senha</mat-label>
+    <input matInput formControlName="confirmarSenha" type="password" placeholder="Digite sua senha">
+    <!-- Resto das mensagens de erro -->
+    <mat-error *ngIf="cadastroForm.get('confirmarSenha')?.errors?.['equalTo']">
+      Senhas não coincidem
+    </mat-error>
+  </mat-form-field>
+<!-- Resto do código -->
+```
