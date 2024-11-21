@@ -1307,3 +1307,129 @@ Pontos de interesse:
 2. O método `http.post` também recebeu um terceiro parâmetro (`{ observe: 'response' }`);
 3. O `UserService` foi injetado em `AutenticacaoService` para fazer os controles de usuário;
 4. A função `tap` do rxjs, encadeado pela função `pipe`, vai pegar a resposta (que é do tipo `AuthResponse`) e executar efeitos colaterais (no caso, salvar o token usando o `UserService`).
+
+## Tela de perfil
+
+Vamos criar o componente de perfil:
+
+```bash
+ng g c pages/perfil --skip-tests
+# Output
+CREATE src/app/pages/perfil/perfil.component.html (21 bytes)
+CREATE src/app/pages/perfil/perfil.component.ts (203 bytes)  
+CREATE src/app/pages/perfil/perfil.component.scss (0 bytes)  
+UPDATE src/app/app.module.ts (3915 bytes)
+```
+
+E em seguida criaremos mais uma rota para o novo `PerfilComponent`:
+```TypeScript
+// frontend\src\app\app-routing.module.ts
+
+// Resto do código
+import { PerfilComponent } from './pages/perfil/perfil.component';
+
+const routes: Routes = [
+  // Resto do código
+  {
+    path: 'perfil',
+    component: PerfilComponent
+  },
+];
+// Resto do código
+```
+
+Vamos flexibilizar o `FormBaseComponent` para que exiba diferentes elementos a depender dos parâmetros fornecidos pelos seus elementos-pai:
+
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+
+// Resto do código
+export class FormBaseComponent implements OnInit{
+  @Input() perfilComponent = false
+  @Input() titulo: string = 'Crie sua conta'
+  @Input() textoBotao: string = 'CADASTRAR'
+  // Resto do código
+}
+```
+
+> A variável `perfilComponent` agora está setada como `false` por default. Logo, o HTML do `CadastroComponent` não precisa mais desse data-binding para ser ocultado em `PerfilComponent`:
+> ```HTML
+> <!-- frontend\src\app\pages\cadastro\cadastro.component.html -->
+> <app-banner
+>   src="assets/imagens/banner-cadastro.png"
+>   alt="Banner da tela de cadastro"
+> >
+> </app-banner>
+> <app-form-base
+>   (acaoClique)="cadastrar()"
+> >
+> </app-form-base>
+> ```
+
+E adaptaremos o HTML de `FormBaseComponent`:
+```HTML
+<!-- frontend\src\app\shared\form-base\form-base.component.html -->
+
+<!-- Resto do código  -->
+  <mat-card-title>
+    {{ titulo }}
+  </mat-card-title>
+  <!-- Resto do código  -->
+  <mat-checkbox *ngIf="!perfilComponent" formControlName="aceitarTermos" color="primary" class="full-width">
+    Li e aceito os termos e condições deste cadastro *
+  </mat-checkbox>
+  <!-- Resto do código  -->
+  <mat-card-actions align="start">
+      <button  mat-flat-button
+        [class.perfil-button]="perfilComponent"
+        ... outras propriedades....
+      >
+        {{ textoBotao }}
+      </button>
+  </mat-card-actions>
+<!-- Resto do código  -->
+```
+> Note o data-binding `class.perfil-button`: ele aplica o estilo SCSS `perfil-button` caso o booleano atribuído a esse databinding seja verdadeiro. No caso, o booleano `perfilComponent` vai dizer se o estilo `perfil-button` será aplicado.
+
+Agora vamos estruturar o novo `PerfilComponent`:
+
+TypeScript:
+```TypeScript
+// frontend\src\app\pages\perfil\perfil.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-perfil',
+  templateUrl: './perfil.component.html',
+  styleUrls: ['./perfil.component.scss']
+})
+export class PerfilComponent {
+  titulo: string = 'Olá Pessoa'
+  textoBotao: string = 'ATUALIZAR'
+
+  perfilComponent: boolean = true
+}
+```
+
+HTML: 
+```HTML
+<!-- frontend\src\app\pages\perfil\perfil.component.html -->
+<app-banner
+  src="assets/imagens/banner-perfil.png"
+  alt="Banner da tela de Perfil"
+/>
+<app-form-base
+  [titulo]="titulo"
+  [textoBotao]="textoBotao"
+  [perfilComponent]="perfilComponent"
+/>
+```
+
+SCSS:
+```SCSS
+// frontend\src\app\pages\perfil\perfil.component.scss
+:host ::ng-deep .perfil-button {
+  width: 100%;
+}
+```

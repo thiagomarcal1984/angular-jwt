@@ -2,7 +2,7 @@
   <mat-card>
     <form [formGroup]="cadastroForm">
       <mat-card-title>
-        Crie sua conta
+        {{ titulo }}
       </mat-card-title>
       <section>
         <div class="acoesPerfil" *ngIf="perfilComponent">
@@ -137,7 +137,7 @@
             </mat-form-field>
           </div>
         </div>
-        <mat-checkbox formControlName="aceitarTermos" color="primary" class="full-width">
+        <mat-checkbox *ngIf="!perfilComponent" formControlName="aceitarTermos" color="primary" class="full-width">
           Li e aceito os termos e condições deste cadastro *
         </mat-checkbox>
         <mat-error *ngIf="cadastroForm.get('aceitarTermos')?.errors?.['required'] && cadastroForm.get('aceitarTermos')?.touched">
@@ -146,11 +146,12 @@
       </mat-card-content>
       <mat-card-actions align="start">
           <button  mat-flat-button
+            [class.perfil-button]="perfilComponent"
             [disabled]="cadastroForm.invalid"
             color="primary"
             (click)="executarAcao()"
           >
-            CADASTRAR
+            {{ textoBotao }}
           </button>
       </mat-card-actions>
     </form>
