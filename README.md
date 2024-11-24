@@ -1504,3 +1504,44 @@ export class PerfilComponent {
 <app-form-base ... (sair)="deslogar()" (acaoClique)="atualizar()" />
 ```
 > Perceba que o pai `PerfilComponent` imprime no console como reação aos eventos emitidos/disparados pelo componente filho `FormBaseComponent`.
+
+## Novos métodos no cadastro service
+O `CadastroService` receberá mais dois métodos para recuperar e modificar o perfil do usuário:
+
+```TypeScript
+// frontend\src\app\core\services\cadastro.service.ts
+
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+
+// Resto do código
+export class CadastroService {
+  // Resto do código
+
+  buscarCadastro(token: string): Observable<PessoaUsuaria> {
+    const header = new HttpHeaders({
+      'Authorization' : `Bearer ${token}`,
+    })
+    return this.http.get<PessoaUsuaria>(
+      `${this.apiUrl}/auth/perfil`,
+      { headers : header },
+    )
+  }
+
+  editarCadastro(token: string, pessoaUsuaria: PessoaUsuaria): Observable<PessoaUsuaria> {
+    const header = new HttpHeaders({
+      'Authorization' : `Bearer ${token}`,
+    })
+    return this.http.patch<PessoaUsuaria>(
+      `${this.apiUrl}/auth/perfil`,
+      pessoaUsuaria,
+      { headers : header },
+    )
+  }
+}
+```
+> Note o método `HttpClient.patch`: ele possui 3 parâmetros:
+> 1. URL;
+> 2. Payload; e
+> 3. Dicionário com dados adicionais (como os cabeçalhos HTTP).
+>
+> O método `HttpClient.get` só tem a URL e o dicionário. Note que nos dois casos o cabeçalho usado é da classe `HttpHeaders` (no plural).
