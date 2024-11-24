@@ -1545,3 +1545,76 @@ export class CadastroService {
 > 3. Dicionário com dados adicionais (como os cabeçalhos HTTP).
 >
 > O método `HttpClient.get` só tem a URL e o dicionário. Note que nos dois casos o cabeçalho usado é da classe `HttpHeaders` (no plural).
+
+## Carregando os dados do perfil
+O foco do código desta aula é apenas recuperar os dados de perfil e colocá-los no formulário.
+
+```HTML
+<!-- frontend\src\app\pages\perfil\perfil.component.html -->
+<!-- Resto do código -->
+<app-form-base
+  [titulo]="titulo + nome"
+  ...
+/>
+```
+
+```TypeScript
+// frontend\src\app\pages\perfil\perfil.component.ts
+
+import { TokenService } from './../../core/services/token.service';
+import { Component, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { CadastroService } from 'src/app/core/services/cadastro.service';
+import { FormularioService } from 'src/app/core/services/formulario.service';
+import { PessoaUsuaria } from 'src/app/core/types/type';
+
+// Resto do código
+export class PerfilComponent implements OnInit {
+  // Resto do código
+
+  token = ''
+  nome = ''
+  cadastro! : PessoaUsuaria
+  form! : FormGroup<any> | null
+
+  constructor(
+    private tokenService: TokenService,
+    private cadastroService: CadastroService,
+    private formularioService: FormularioService,
+  ) {}
+
+  ngOnInit(): void {
+    this.token = this.tokenService.retornarToken()
+    this.cadastroService.buscarCadastro(this.token).subscribe(
+      cadastro => { // Lembre-se: cadastro é uma PessoaUsuaria.
+        this.cadastro = cadastro
+        this.nome = this.cadastro.nome
+        this.carregarFormulario()
+      }
+    )
+  }
+
+  carregarFormulario () {
+    this.form = this.formularioService.getCadastro()
+    this.form?.patchValue({
+      nome: this.cadastro.nome,
+      nascimento: this.cadastro.nascimento,
+      cpf: this.cadastro.cpf,
+      telefone: this.cadastro.telefone,
+      email: this.cadastro.email,
+      senha: this.cadastro.senha,
+      genero: this.cadastro.genero,
+      cidade: this.cadastro.cidade,
+      estado: this.cadastro.estado,
+    })
+  }
+  // Resto do código
+}
+```
+> Basicamente ocorre o seguinte: 
+> 1. Declaramos uma `PessoaUsuaria` batizada de `cadastro` na página `PerfilComponent`;
+> 2. Usamos o `TokenService` para buscar o token que será usado ao buscar a `PessoaUsuaria`;
+> 3. Usamos o `CadastroService` para buscar a `PessoaUsuaria` e carregar o formulário com seus dados;
+> 4. Usamos o `FormularioService` para buscar o formulário de cadastro chamado `form`, e preenchemos esse form com os dados da `PessoaUsuaria` batizada de `cadastro` e recuperada pelo `CadastroService`.
+
+Na próxima aula vamos atualizar o perfil.
