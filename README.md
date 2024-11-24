@@ -1308,6 +1308,7 @@ Pontos de interesse:
 3. O `UserService` foi injetado em `AutenticacaoService` para fazer os controles de usuário;
 4. A função `tap` do rxjs, encadeado pela função `pipe`, vai pegar a resposta (que é do tipo `AuthResponse`) e executar efeitos colaterais (no caso, salvar o token usando o `UserService`).
 
+# Criando e editando o perfil
 ## Tela de perfil
 
 Vamos criar o componente de perfil:
@@ -1618,3 +1619,54 @@ export class PerfilComponent implements OnInit {
 > 4. Usamos o `FormularioService` para buscar o formulário de cadastro chamado `form`, e preenchemos esse form com os dados da `PessoaUsuaria` batizada de `cadastro` e recuperada pelo `CadastroService`.
 
 Na próxima aula vamos atualizar o perfil.
+
+## Editando o perfil
+```TypeScript
+import { UserService } from './../../core/services/user.service';
+import { Router } from '@angular/router';
+// Resto do código
+
+export class PerfilComponent implements OnInit {
+  // Resto do código
+  form! : FormGroup<any> | null
+
+constructor(
+    // Resto do código
+    private router: Router,
+    private userService: UserService,
+  ) {}
+
+  // Resto do código
+  deslogar () {
+    this.userService.logout()
+    this.router.navigate(['/login'])
+  }
+
+  atualizar () {
+    const dadosAtualizados =  {
+      nome: this.form?.value.nome,
+      nascimento: this.form?.value.nascimento,
+      cpf: this.form?.value.cpf,
+      telefone: this.form?.value.telefone,
+      email: this.form?.value.email,
+      senha: this.form?.value.senha,
+      genero: this.form?.value.genero,
+      cidade: this.form?.value.cidade,
+      estado: this.form?.value.estado,
+    }
+
+    this.cadastroService.editarCadastro(this.token, dadosAtualizados).subscribe({
+      next: () => {
+        alert('Cadastro editado com sucesso.')
+        this.router.navigate(['/'])
+      },
+      error: (err) => {
+        console.error('Erro ao atualizar cadastro.', err)
+      }
+    })
+  }
+}
+```
+O método `deslogar` é o mais fácil de explicar: depois que injetamos os serviços, `UserService` é usado para fazer o logout e `Router` é usado para redirecionar o navegador para a tela de login. 
+
+Já o método `atualizar` recupera os dados de todos os campos do formulário (um `FormGroup` chamado `form`) e os submete para o método `CadastroService.editarCadastro`, que retorna um `Observable`. Se o carregamento for bem sucedido, ele emite um alerta e redireciona o navegador para a raiz da aplicação.
