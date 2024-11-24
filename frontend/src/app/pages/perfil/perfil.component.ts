@@ -10,4 +10,11 @@ export class PerfilComponent {
   textoBotao: string = 'ATUALIZAR'
 
   perfilComponent: boolean = true
+
+  deslogar () {
+    console.log('Log out realizado com sucesso.')
+  }
+  atualizar () {
+    console.log('Cadastro atualizado com sucesso.')
+  }
 }

@@ -1433,3 +1433,74 @@ SCSS:
   width: 100%;
 }
 ```
+## Comunicação entre componentes
+`FormBaseComponent` é filho de `PerfilComponent`. Vamos fazer `FormBaseComponent` emitir um evento `deslogar()` quando clicamos no botão de deslogar. Esse evento `deslogar()` será propagado para o pai `PerfilComponent`.
+
+```TypeScript
+// frontend\src\app\shared\form-base\form-base.component.ts
+
+// Resto do código
+export class FormBaseComponent implements OnInit{
+  @Output() sair: EventEmitter<any> = new EventEmitter<any>()
+  // Resto do código
+  ngOnInit() {
+    this.cadastroForm = this.formBuilder.group({
+      // Resto do código
+      aceitarTermos: [null, [Validators.requiredTrue]],
+    })
+
+    if (this.perfilComponent) { 
+      // Se `perfilComponent`, vamos remover o validador do campo `aceitarTermos`
+      this.cadastroForm.get('aceitarTermos')?.setValidators(null)
+    } else {
+      // Em outras páginas vamos usar os mesmos validadores do campo `aceitarTermos`.
+      this.cadastroForm.get('aceitarTermos')?.setValidators([Validators.requiredTrue])
+    }
+    // campo?.updateValueAndValidity() repete a validação após remoção/inclusão das validações.
+    this.cadastroForm.get('aceitarTermos')?.updateValueAndValidity()
+    // Resto do código
+  }
+
+  executarAcao() {
+    this.acaoClique.emit()
+  }
+
+  deslogar () {
+    this.sair.emit()
+  }
+}
+```
+
+```HTML
+<!-- frontend\src\app\shared\form-base\form-base.component.html -->
+
+<!-- Resto do código -->
+  <button (click)="deslogar()" mat-stroked-button color="primary">
+    <mat-icon>logout</mat-icon>
+    DESLOGAR
+  </button>
+<!-- Resto do código -->
+```
+
+Agora o código do pai `PerfilComponent` para tratar o evento personalizado:
+```TypeScript
+// frontend\src\app\pages\perfil\perfil.component.ts
+
+// Resto do código
+export class PerfilComponent {
+  // Resto do código
+  deslogar () {
+    console.log('Log out realizado com sucesso.')
+  }
+  atualizar () {
+    console.log('Cadastro atualizado com sucesso.')
+  }
+}
+```
+
+```HTML
+<!-- frontend\src\app\pages\perfil\perfil.component.html -->
+<!-- Resto do código -->
+<app-form-base ... (sair)="deslogar()" (acaoClique)="atualizar()" />
+```
+> Perceba que o pai `PerfilComponent` imprime no console como reação aos eventos emitidos/disparados pelo componente filho `FormBaseComponent`.
