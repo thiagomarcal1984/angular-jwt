@@ -1670,3 +1670,144 @@ constructor(
 O método `deslogar` é o mais fácil de explicar: depois que injetamos os serviços, `UserService` é usado para fazer o logout e `Router` é usado para redirecionar o navegador para a tela de login. 
 
 Já o método `atualizar` recupera os dados de todos os campos do formulário (um `FormGroup` chamado `form`) e os submete para o método `CadastroService.editarCadastro`, que retorna um `Observable`. Se o carregamento for bem sucedido, ele emite um alerta e redireciona o navegador para a raiz da aplicação.
+
+# Interceptor e guarda de rotas
+## Interceptando requisições
+Vamos criar um Interceptor com a Angular CLI para modificar as requisições HTTP da aplicação:
+
+```bash
+ng g interceptor core/interceptors/autenticacao --skip-tests
+# Output
+CREATE src/app/core/interceptors/autenticacao.interceptor.ts (417 bytes)
+```
+
+E vamos também provê-la em `app.module.ts`:
+```TypeScript
+// frontend\src\app\app.module.ts
+
+// Resto do código
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { AutenticacaoInterceptor } from './core/interceptors/autenticacao.interceptor';
+@NgModule({
+  // Resto do código
+  providers: [{
+    provide: HTTP_INTERCEPTORS,
+    useClass: AutenticacaoInterceptor,
+    multi: true, // Com multi = true, pode-se usar mais interceptors.
+  }],
+  // Resto do código
+})
+```
+
+A implementação do Interceptor é esta: 
+```TypeScript
+// frontend\src\app\core\interceptors\autenticacao.interceptor.ts
+import { TokenService } from './../services/token.service';
+import { Injectable } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AutenticacaoInterceptor implements HttpInterceptor {
+
+  constructor(
+    private tokenService: TokenService,
+  ) {}
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    if (this.tokenService.possuiToken()) {
+      const token = this.tokenService.retornarToken()
+
+      // Vamos clonar a requisição original e incluir o token
+      // no cabeçalho da requisição clonada.
+      request = request.clone({
+        setHeaders: {
+          'Authorization' : `Bearer ${token}`,
+        }
+      })
+    }
+    return next.handle(request);
+  }
+}
+```
+
+Finalmente, poderemos simplificar a assinatura dos métodos que dependem do uso do token de autenticação:
+```TypeScript
+// frontend\src\app\core\services\cadastro.service.ts
+// Resto do código
+export class CadastroService {
+  private apiUrl = environment.apiUrl
+
+  constructor(
+    private http: HttpClient,
+  ) { }
+
+  // Resto do código
+
+  // Antes
+  // buscarCadastro(token: string): Observable<PessoaUsuaria> {
+  //   const header = new HttpHeaders({
+  //     'Authorization' : `Bearer ${token}`,
+  //     {headers : header },
+  //   })
+  // }
+  // Depois
+  buscarCadastro(): Observable<PessoaUsuaria> {
+    return this.http.get<PessoaUsuaria>(
+      `${this.apiUrl}/auth/perfil`,
+    )
+  }
+  
+  // Antes
+  // editarCadastro(token: string, pessoaUsuaria: PessoaUsuaria): Observable<PessoaUsuaria> {
+  //   const header = new HttpHeaders({
+  //     'Authorization' : `Bearer ${token}`,
+  //     pessoaUsuaria,
+  //     {headers : header },
+  //   })
+  // }
+  // Depois
+  editarCadastro(pessoaUsuaria: PessoaUsuaria): Observable<PessoaUsuaria> {
+    return this.http.patch<PessoaUsuaria>(
+      `${this.apiUrl}/auth/perfil`,
+      pessoaUsuaria,
+    )
+  }
+}
+```
+
+```TypeScript
+// frontend\src\app\pages\perfil\perfil.component.ts
+// Resto do código
+export class PerfilComponent implements OnInit {
+  ngOnInit(): void {
+    // Antes
+    // this.token = this.tokenService.retornarToken()
+    // this.cadastroService.buscarCadastro(this.token).subscribe(
+    //   // Resto do código
+    // )
+    // Depois
+    this.cadastroService.buscarCadastro().subscribe(
+      // Resto do código
+    )
+  }
+
+  atualizar () {
+    const dadosAtualizados =  {
+      // Resto do código
+    }
+
+    // Antes
+    // this.cadastroService.editarCadastro(this.token, dadosAtualizados).subscribe({
+    // Depois
+    this.cadastroService.editarCadastro(dadosAtualizados).subscribe({
+      // Resto do código
+    })
+  }
+}
+```
