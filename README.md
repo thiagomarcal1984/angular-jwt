@@ -1811,3 +1811,64 @@ export class PerfilComponent implements OnInit {
   }
 }
 ```
+
+## Guarda de rota funcional
+Vamos criar um guarda de rota funcional para impedir o acesso a rotas que dependem de o usuário estar logado:
+
+```TypeScript
+// frontend\src\app\core\guards\auth.guard.ts
+
+import { inject } from "@angular/core"
+import { UserService } from "../services/user.service"
+import { Router } from "@angular/router"
+
+export const authGuard = () => {
+  const userService = inject(UserService)
+  const router = inject(Router)
+
+  if (userService.estaLogado()) {
+    return true
+  } else {
+    router.navigate(['/login'])
+    return false
+  }
+}
+```
+> Esse código foi escrito do zero. Não há como criá-lo a partir da Angular CLI.
+> 
+> Outra coisa: o método `UserService.estaLogado()` não estava retornando um booleano, daí foi necessário mudar esse código também: 
+> ```TypeScript
+> // frontend\src\app\core\services\user.service.ts
+> 
+> // Resto do código
+> export class UserService {
+>   // Resto do código
+>   // Antes 
+>   // estaLogado() {
+>   //   this.tokenService.possuiToken()
+>   // }
+>   // Depois
+>   estaLogado() : boolean {
+>     return this.tokenService.possuiToken()
+>   }
+> }
+> 
+> ```
+
+Mudança no código de `AppRoutingModule` para aplicar a restrição à rota:
+```TypeScript
+// frontend\src\app\app-routing.module.ts
+
+import { authGuard } from './core/guards/auth.guard';
+
+const routes: Routes = [
+  // Resto do código
+  {
+    path: 'perfil',
+    component: PerfilComponent,
+    canActivate: [ authGuard ],
+  },
+];
+// Resto do código
+```
+> Note que a função `authGuard` não foi invocada no parâmetro `canActivate`, foi apenas referenciada.

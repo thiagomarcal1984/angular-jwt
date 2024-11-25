@@ -39,7 +39,7 @@ export class UserService {
     this.userSubject.next(null) // Emite usuário nulo.
   }
 
-  estaLogado() {
-    this.tokenService.possuiToken()
+  estaLogado() : boolean {
+    return this.tokenService.possuiToken()
   }
 }
