@@ -1930,3 +1930,42 @@ export class HeaderComponent {
   }
 }
 ```
+
+## Para saber mais: guarda de rotas funcional
+
+### Abordagem funcional para a guarda de rotas no Angular versus abordagem de criação de classes
+A guarda de rotas é um conceito essencial no Angular, que serve para proteger seções de um aplicativo, verificando a autenticação do usuário e outras permissões antes de permitir o acesso a determinadas rotas. Existem basicamente duas maneiras de fazer isso no Angular: usando uma abordagem funcional ou usando a abordagem de criação de classes. Vamos aprofundar nosso conhecimento sobre essas duas abordagens.
+
+### Abordagem funcional
+Nesta abordagem, as funções são usadas como guardas de rota. Cada função retorna um resultado booleano (verdadeiro ou falso) que o Angular usa para determinar se uma rota pode ser acessada ou não. Se a função retornar verdadeiro, o Angular permitirá o acesso à rota. Se a função retornar falso, o Angular não permitirá.
+
+Aqui está um exemplo simples de como pode parecer uma guarda de rota utilizada em uma abordagem funcional:
+```TypeScript
+export function adminGuard(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+  return window.confirm('Você é um administrador?');
+}
+```
+
+Neste exemplo, a função adminGuard é uma guarda de rota que questiona se o usuário é um administrador. Se o usuário confirmar (ao clicar em 'OK' na janela de confirmação), a função retornará verdadeiro e o Angular permitirá o acesso à rota. Caso contrário, o Angular negará.
+
+### Abordagem de criação de classes
+Nesta abordagem, as classes são usadas como guardas de rota. Cada classe implementa uma ou mais interfaces fornecidas pelo Angular, que representam diferentes tipos de guardas de rota. Ao implementar essas interfaces, as classes devem fornecer métodos específicos que o Angular chamará para determinar se uma rota pode ser acessada ou não.
+
+Aqui está um exemplo simples de como pode parecer uma guarda de rota criada através da abordagem de criação de classes:
+```TypeScript
+@Injectable()
+export class AdminGuard implements CanActivate {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+    return window.confirm('Você é um administrador?');
+  }
+}
+```
+
+Neste exemplo, a classe AdminGuard é uma guarda de rota que faz a mesma pergunta que a função do nosso primeiro exemplo. Mas neste caso, a pergunta é feita no método canActivate, que é exigido pela interface CanActivate.
+
+### Conclusão
+Então, qual abordagem é melhor? Não existe uma resposta definitiva para essa pergunta. A escolha entre a abordagem funcional e a abordagem de criação de classes depende do contexto e das preferências pessoais.
+
+A abordagem funcional geralmente leva a um código mais simples e fácil de entender, pois é mais direta. No entanto, a abordagem de criação de classes oferece uma maior flexibilidade, pois permite que você use DI (Injeção de Dependência) e fornece suporte para recursos mais avançados, como lazy loading.
+
+Em geral, ambas as abordagens são válidas e você pode escolher a que melhor se adapta às suas necessidades.
