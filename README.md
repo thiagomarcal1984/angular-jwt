@@ -1872,3 +1872,61 @@ const routes: Routes = [
 // Resto do código
 ```
 > Note que a função `authGuard` não foi invocada no parâmetro `canActivate`, foi apenas referenciada.
+
+## Ajustando o header
+```HTML
+<!-- frontend\src\app\shared\header\header.component.html -->
+<header class="app-header">
+  <mat-toolbar>
+    <img src="assets/imagens/logo.png" alt="Logo da aplicação Jornada">
+    <span class="spacer"></span>
+    <div class="links-toolbar">
+      <button mat-button>Vender milhas</button>
+      <button mat-button>Sobre</button>
+      <ng-container *ngIf="user$ | async as pessoaUsuaria, else login">
+        <a routerLink="/perfil">
+          <img src="assets/icones/user.png" alt="Ícone da pessoa usuária">
+        </a>
+        <button mat-stroked-button (click)="logout()">SAIR</button>
+      </ng-container>
+      <ng-template #login>
+        <button routerLink="/cadastro" mat-raised-button color="primary">CADASTRE-SE</button>
+        <button routerLink="/login" mat-stroked-button>LOGIN</button>
+      </ng-template>
+    </div>
+  </mat-toolbar>
+</header>
+```
+Versão simplificada do código:
+```HTML
+  <ng-container *ngIf="user$ | async as pessoaUsuaria, else login">
+    <!-- Resto do código -->
+    <button mat-stroked-button (click)="logout()">SAIR</button>
+  </ng-container>
+  <ng-template #login>
+    <!-- Resto do código -->
+  </ng-template>
+```
+> Note que o método `logout()` não é o que está em `UserService`: ele foi declarado novamente em `HeaderComponent`, e dentro de `HeaderComponent.logout()` é chamado o método `UserService.logout()`.
+
+```TypeScript
+// frontend\src\app\shared\header\header.component.ts
+
+import { Router } from '@angular/router';
+import { UserService } from './../../core/services/user.service';
+
+// Resto do código
+export class HeaderComponent {
+  constructor (
+    private userService: UserService,
+    private router: Router,
+  ) {}
+
+  user$ = this.userService.retornarUser()
+
+  logout() {
+    this.userService.logout()
+    this.router.navigate(['/login'])
+  }
+}
+```
